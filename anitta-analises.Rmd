@@ -1,0 +1,76 @@
+---
+title: "anitta-project"
+author: "Arthur"
+date: "6 de junho de 2017"
+output: html_document
+---
+
+Uma análise sobre os dados da cantora Anitta.
+
+```{r, eval=F, message=F, warning=F}
+#install.packages('devtools')
+library(devtools)
+
+#versão mais recente do pacote
+devtools::install_github("soodoku/tuber", build_vignettes = TRUE)
+
+#carregando bibliotecas necessarias
+library(tuber)  # Acesso a API do YouTube
+```
+
+
+```{r}
+yt_oauth(app_id = "273807722068-unnpeh2c9dju03oqjutnbnu9ogd4bcv7.apps.googleusercontent.com",
+        app_secret = "QKhOlvht_TDhrWhSpleTMEA8")
+```
+
+
+```{r, message=F, warning=F}
+#carregando biblitotecas extras
+library(dplyr)        # Manipulação de dados
+library(tibble)       # Criação de dataframes
+library(lubridate)    # Manipulação de datas
+library(purrr)        # Funcionais
+library(plotly)       # Gráficos
+library(streamgraph)  # Gráficos
+
+```
+
+```{r, eval=F}
+get_videos <- function(dates, id_channel) {
+  yt_search(term = "", 
+            type = "video",
+            channel_id = id_channel,
+            published_after = dates$start,
+            published_before = dates$end)
+}
+```
+
+```{r, eval=F}
+dates <- tibble(start = seq(ymd("2008-01-01"), ymd("2017-01-01"), by = "years"),
+                        end = seq(ymd("2008-12-31"), ymd("2017-12-31"), by = "years")) %>% 
+  mutate(start = paste(start, "T0:00:00Z", sep = ""),
+         end = paste(end, "T0:00:00Z", sep = ""))
+
+```
+
+```{r}
+videos_anitta <- by_row(.d = dates, "UCqjjyPUghDSSKFBABM_CXMw", ..f = get_videos, .to = "videos_info")
+
+```
+
+```{r, eval=F}
+#pegando estatísticas dos vídeos
+get_videos_stats <- function(df_row) {
+  get_stats(video_id = df_row$video_id)
+}
+
+```
+
+```{r, eval=F}
+dados_anitta <- bind_rows(videos_anitta$videos_info) %>% 
+  select(title, publishedAt, video_id) %>%
+  by_row(..f = get_videos_stats, .to = "videos_stats")
+
+```
+
